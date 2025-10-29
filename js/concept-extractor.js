@@ -14,9 +14,7 @@ class ConceptExtractor {
       ["algorithms", ["アルゴリズム", "algorithm", "計算手法"]],
       ["recursion", ["再帰", "recursion", "再帰的"]],
       ['object-oriented', ['オブジェクト指向', 'OOP', 'クラス', 'インスタンス']],
-      ['inheritance', ['継承', 'inheritance', '親クラス', '子クラス']],
-      ['Math',['数','図形','関数','合同条件','足し算']],
-      ['Soccer',['ボール','サッカー','対決','チーム','エゴイスト']]
+      g
 
     ]);
   }
