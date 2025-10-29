@@ -1,0 +1,85 @@
+{
+  "concepts": {
+    "programming": {
+      "label": "プログラミング",
+      "level": "beginner",
+      "subConcepts": ["variables", "functions", "loops", "conditionals"],
+      "prerequisites": [],
+      "relatedConcepts": ["computer-science", "algorithms"],
+      "description": "コンピュータプログラムの作成技術"
+    },
+    "variables": {
+      "label": "変数",
+      "level": "beginner",
+      "subConcepts": ["data-types", "scope"],
+      "prerequisites": [],
+      "relatedConcepts": ["memory", "assignment"],
+      "description": "データを格納するための名前付きの場所"
+    },
+    "functions": {
+      "label": "関数",
+      "level": "intermediate",
+      "subConcepts": ["parameters", "return-values", "recursion"],
+      "prerequisites": ["variables"],
+      "relatedConcepts": ["procedures", "methods", "abstraction"],
+      "description": "再利用可能なコードブロック"
+    },
+    "data-structures": {
+      "label": "データ構造",
+      "level": "intermediate",
+      "subConcepts": ["arrays", "linked-lists", "trees", "graphs"],
+      "prerequisites": ["programming", "variables"],
+      "relatedConcepts": ["algorithms", "complexity"],
+      "description": "データを効率的に格納・操作する方法"
+    },
+    "algorithms": {
+      "label": "アルゴリズム",
+      "level": "intermediate",
+      "subConcepts": ["sorting", "searching", "recursion"],
+      "prerequisites": ["programming", "functions"],
+      "relatedConcepts": ["data-structures", "complexity"],
+      "description": "問題解決の手順"
+    },
+    "object-oriented": {
+      "label": "オブジェクト指向",
+      "level": "intermediate",
+      "subConcepts": ["classes", "inheritance", "polymorphism"],
+      "prerequisites": ["functions", "data-structures"],
+      "relatedConcepts": ["abstraction", "encapsulation"],
+      "description": "オブジェクトを中心としたプログラミング手法"
+    },
+    "Math": {
+      "label": "数学",
+      "level": "beginner",
+      "subConcepts": ["加算", "減算", "乗算", "除算", "時間計算"],
+      "prerequisites": ["数と式", "関数", "データの整理"],
+      "relatedConcepts": ["論理的思考", "問題解決", "抽象化"],
+      "description": "中級レベルの数学では、四則演算や時間の計算に加え、関数やデータの扱いを通じて論理的思考力を養う。"
+    },
+    "Soccer": {
+      "label": "サッカー",
+      "level": "中級",
+      "subConcepts": ["パス", "ドリブル", "シュート", "ポジショニング", "戦術理解"],
+      "prerequisites": ["ルールの理解", "基本的な体力", "チームプレイの意識"],
+      "relatedConcepts": ["戦略", "コミュニケーション", "判断力"],
+      "description": "サッカーの中級レベルでは、技術の向上だけでなく、ポジショニングや戦術理解などの知的要素も重要になる。ルールや体力、チームプレイの基礎を前提に、戦略的な判断力とコミュニケーション能力を高めていく。"
+    },
+    "PhysicalEducation": {
+      "label": "体育",
+      "level": "中級",
+      "subConcepts": ["体力測定", "運動技能", "チームスポーツ", "個人競技", "健康管理"],
+      "prerequisites": ["基本的な運動能力", "安全な運動習慣", "身体の構造と機能の理解"],
+      "relatedConcepts": ["協調性", "自己管理", "ライフスタイル改善"],
+      "description": "体育では、運動技能の向上だけでなく、健康管理や協調性の育成も重視される。中級レベルでは、個人競技とチームスポーツの両方を通じて、身体能力と社会的スキルをバランスよく伸ばす。"
+    }
+  },
+  "relations": [
+    { "from": "variables", "to": "functions", "type": "prerequisite", "strength": 0.8 },
+    { "from": "functions", "to": "recursion", "type": "prerequisite", "strength": 0.9 },
+    { "from": "programming", "to": "data-structures", "type": "prerequisite", "strength": 0.7 },
+    { "from": "algorithms", "to": "data-structures", "type": "related", "strength": 0.9 },
+    { "from": "functions", "to": "object-oriented", "type": "prerequisite", "strength": 0.8 },
+    { "from": "ball", "to": "Soccer", "type": "prerequisite", "strength": 0.9 },
+    { "from": "数と式", "to": "Math", "type": "prerequisite", "strength": 0.7 }
+  ]
+}
