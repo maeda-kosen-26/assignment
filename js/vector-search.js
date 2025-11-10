@@ -4,7 +4,7 @@ class VectorSearchEngine {
         this.embeddings = [];
         // 第1回で作成したクライアントを再利用
         this.llm = new EducationLLMClient(
-            API_CONFIG.studentId  // config.jsから取得
+            window.API_CONFIG.studentId  // config.jsから取得
         );
     }
     

@@ -14,7 +14,7 @@ class ConceptExtractor {
       ["algorithms", ["アルゴリズム", "algorithm", "計算手法"]],
       ["recursion", ["再帰", "recursion", "再帰的"]],
       ['object-oriented', ['オブジェクト指向', 'OOP', 'クラス', 'インスタンス']],
-      g
+      
 
     ]);
   }
