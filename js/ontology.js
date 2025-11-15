@@ -1,3 +1,4 @@
+// ontology.js
 class LearningOntology {
   constructor() {
     this.concepts = new Map();
@@ -54,6 +55,21 @@ class LearningOntology {
     return this.concepts.get(conceptId);
   }
 
+  // 前提知識チェーン（prerequisite関係をたどる）
+  getPrerequisiteChain(conceptId) {
+    const chain = [];
+    const concept = this.concepts.get(conceptId);
+
+    if (concept && concept.prerequisites) {
+      for (const prereq of concept.prerequisites) {
+        chain.push(prereq);
+        chain.push(...this.getPrerequisiteChain(prereq));
+      }
+    }
+
+    return [...new Set(chain)];
+  }
+
   // 関連概念の探索（幅優先探索）
   findRelatedConcepts(conceptId, maxDepth = 2) {
     const visited = new Set();
@@ -62,25 +78,14 @@ class LearningOntology {
 
     while (queue.length > 0) {
       const { concept, depth } = queue.shift();
-
-      // 訪問済みまたは深さ超過ならスキップ
-      if (visited.has(concept) || depth > maxDepth) {
-        continue;
-      }
-
+      if (visited.has(concept) || depth > maxDepth) continue;
       visited.add(concept);
+      if (depth > 0) related.add(concept);
 
-      // 最初の概念以外は結果に追加
-      if (depth > 0) {
-        related.add(concept);
-      }
-
-      // 直接関係のある概念を探索
       for (const [key, relation] of this.relations) {
         if (relation.from === concept && !visited.has(relation.to)) {
           queue.push({ concept: relation.to, depth: depth + 1 });
         }
-        // 双方向で探索（related関係など）
         if (relation.to === concept && !visited.has(relation.from)) {
           queue.push({ concept: relation.from, depth: depth + 1 });
         }
@@ -90,21 +95,9 @@ class LearningOntology {
     return Array.from(related);
   }
 
-  // 前提知識チェーン（prerequisite関係をたどる）
-  getPrerequisiteChain(conceptId) {
-    const chain = [];
-    const concept = this.concepts.get(conceptId);
-
-    if (concept && concept.prerequisites) {
-      for (const prereq of concept.prerequisites) {
-        chain.push(prereq);
-        // 再帰的に前提知識を取得
-        chain.push(...this.getPrerequisiteChain(prereq));
-      }
-    }
-
-    // 重複を除去
-    return [...new Set(chain)];
+  // getRelatedConceptsとしてラッパーを追加
+  getRelatedConcepts(conceptId, maxDepth = 2) {
+    return this.findRelatedConcepts(conceptId, maxDepth);
   }
 
   // デバッグ用：オントロジーの状態を表示

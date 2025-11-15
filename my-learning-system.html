@@ -15,8 +15,8 @@ header p { font-size:1.2em; opacity:0.9; }
 .card { background:white; border-radius:15px; padding:25px; box-shadow:0 10px 30px rgba(0,0,0,0.2); }
 .card h2 { color:#667eea; margin-bottom:20px; padding-bottom:10px; border-bottom:3px solid #667eea; }
 .input-group { margin-bottom:15px; }
-.input-group input { width:100%; padding:12px; border:2px solid #ddd; border-radius:8px; font-size:1em; transition:border-color 0.3s; }
-.input-group input:focus { outline:none; border-color:#667eea; }
+.input-group input, .input-group select { width:100%; padding:12px; border:2px solid #ddd; border-radius:8px; font-size:1em; transition:border-color 0.3s; }
+.input-group input:focus, .input-group select:focus { outline:none; border-color:#667eea; }
 button { background:#667eea; color:white; border:none; padding:12px 24px; border-radius:8px; font-size:1em; cursor:pointer; transition:all 0.3s; }
 button:hover { background:#5568d3; transform:translateY(-2px); box-shadow:0 5px 15px rgba(102,126,234,0.4); }
 #response-area { margin-top:20px; padding:15px; background:#f8f9fa; border-radius:8px; min-height:100px; display:none; }
@@ -24,6 +24,7 @@ button:hover { background:#5568d3; transform:translateY(-2px); box-shadow:0 5px 
 @keyframes fadeIn { from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);} }
 .sidebar-section { margin-bottom:20px; padding:15px; background:#f8f9fa; border-radius:8px; }
 .sidebar-section h3 { color:#667eea; margin-bottom:10px; }
+#quiz-area { margin-top:20px; display:none; }
 </style>
 </head>
 <body>
@@ -34,14 +35,34 @@ button:hover { background:#5568d3; transform:translateY(-2px); box-shadow:0 5px 
 </header>
 
 <div class="main-grid">
-<div class="card">
-<h2>💬 質問・学習エリア</h2>
-<div class="input-group">
-<input type="text" id="question-input" placeholder="質問を入力してください..." onkeypress="if(event.key==='Enter') processQuestion()"/>
-</div>
-<button onclick="processQuestion()">質問する</button>
-<button onclick="clearResponse()" style="background:#6c757d;">クリア</button>
-<div id="response-area"></div>
+<div>
+    <div class="card">
+        <h2>💬 質問・学習エリア</h2>
+        <div class="input-group">
+            <input type="text" id="question-input" placeholder="質問を入力してください..." 
+                   onkeypress="if(event.key==='Enter') processQuestion()"/>
+        </div>
+        <button onclick="processQuestion()">質問する</button>
+        <button onclick="clearResponse()" style="background:#6c757d;">クリア</button>
+        <div id="response-area"></div>
+
+        <h2>📝 クイズ生成エリア</h2>
+        <div class="input-group">
+            <input type="text" id="quiz-topic-input" placeholder="クイズのトピックを入力..."/>
+        </div>
+        <div class="input-group">
+            <select id="quiz-level-select">
+                <option value="beginner">初心者向け</option>
+                <option value="intermediate">中級者向け</option>
+                <option value="advanced">上級者向け</option>
+            </select>
+        </div>
+        <button onclick="generateQuizFromInput()">クイズ生成</button>
+
+        <div id="quiz-area" class="card">
+            <div id="quiz-content"></div>
+        </div>
+    </div>
 </div>
 
 <div>
@@ -71,13 +92,11 @@ button:hover { background:#5568d3; transform:translateY(-2px); box-shadow:0 5px 
 let semanticRAG;
 let questionCount = 0;
 
-// 状態更新
 function updateStatus(msg){
     const el = document.getElementById('system-status');
     if(el) el.innerHTML = `<p style="padding:10px;background:white;border-radius:5px;">${msg}</p>`;
 }
 
-// 統計情報更新
 function updateStatistics(documentsData=null){
     const totalDocs = documentsData?.documents?.length || (semanticRAG?.documents?.length || 0);
     const statsElem = document.getElementById('statistics');
@@ -90,14 +109,13 @@ function updateStatistics(documentsData=null){
     }
 }
 
-// 回答クリア
 function clearResponse(){
     const area=document.getElementById('response-area');
     if(area){ area.className=''; area.innerHTML=''; }
     document.getElementById('question-input').value='';
 }
 
-// 質問処理
+/*** 質問処理 ***/
 async function processQuestion(){
     const question=document.getElementById('question-input').value.trim();
     if(!question){ alert('質問を入力してください'); return; }
@@ -119,7 +137,7 @@ async function processQuestion(){
     }
 }
 
-// 初期化
+/*** 初期化 ***/
 async function initialize(){
     updateStatus('初期化中...');
     try{
@@ -129,7 +147,6 @@ async function initialize(){
         semanticRAG = new SemanticRAGSystem();
         await semanticRAG.initialize(documentsData.documents, ontologyData);
 
-        // ✅ 修正：llmClient → llm
         if(!semanticRAG.llm){
             console.error('LLMクライアントが未準備です');
             updateStatus('❌ LLMクライアント未準備');
@@ -139,72 +156,75 @@ async function initialize(){
         updateStatus('✅ 準備完了');
         updateStatistics(documentsData);
 
-        // 初期化後に4回答のプロンプト実験（コンソール表示）
-        await experimentPrompts();
-        await  experimentSearch();
-
     }catch(err){
         console.error('初期化失敗:', err);
         updateStatus('❌ 初期化失敗');
     }
 }
 
-// 4回答プロンプト実験（コンソール表示）
-async function experimentPrompts() {
-    if (!semanticRAG?.llm) {
-        console.warn('⚠ LLMクライアント未準備です');
-        return;
+/*** クイズ生成 ***/
+async function generateQuiz(topic, level="beginner"){
+    const levelLabel = {
+        beginner: "初心者向け",
+        intermediate: "中級者向け",
+        advanced: "上級者向け"
+    }[level] || "初心者向け";
+
+    const prompt = `
+${topic}について、${levelLabel}の4択問題を1つ作成してください。
+出力は必ず以下のJSON形式で返してください:
+{"question":"...", "options":["A","B","C","D"], "correct":0}
+`;
+
+    const res = await semanticRAG.llm.chat(prompt);
+
+    try {
+        return JSON.parse(res.response);
+    } catch (e) {
+        console.error("JSONパースに失敗:", e);
+        console.log("LLM返却:", res.response);
+        return null;
     }
-
-    const question = "変数とは何ですか？";
-    const searchResult = await semanticRAG.semanticQuery(question);
-    const sourcesText = (searchResult.sources || [])
-        .map(s => s.document?.text || '')
-        .join('\n\n') || '参考情報なし';
-
-    const prompts = [
-        { label: 'そのまま質問', text: question },
-        { label: '教師風説明', text:`あなたは優秀なプログラミング講師です。質問: ${question}` },
-        { label: '3ステップ説明', text:`3ステップで説明してください:\n1. 定義\n2. 例\n3. 重要性\n質問: ${question}` },
-        { label: 'RAG検索結果含む', text:`参考情報:\n${sourcesText}\n質問: ${question}` }
-    ];
-
-    console.log('================ 4回答プロンプト実験 開始 ================');
-
-    for (let i = 0; i < prompts.length; i++) {
-        try {
-            const answer = await semanticRAG.llm.chat(prompts[i].text);
-            console.log(`📌 回答${i+1} (${prompts[i].label}):\n${answer.response}\n`);
-        } catch (err) {
-            console.error(`❌ 回答${i+1}取得中にエラー (${prompts[i].label}):`, err);
-        }
-    }
-
-    console.log('================ 4回答プロンプト実験 終了 ================');
-}
-async function experimentSearch() {
-    const query = "ループの使い方";
-    
-    // 方法1: 通常のベクトル検索
-    const vectorResults = await semanticRAG.searchEngine.search(query, 3);
-    console.log('=== ベクトル検索 ===');
-    console.log(vectorResults);
-    
-    // 方法2: オントロジー強化検索
-    const semanticResults = await semanticRAG.semanticQuery(query);
-    console.log('=== オントロジー検索 ===');
-    console.log(semanticResults);
-    
-    // 違いを分析
-    console.log('=== 比較 ===');
-    console.log('ベクトル検索:', vectorResults.length, '件');
-    console.log('オントロジー検索:', semanticResults.sources.length, '件');
-    console.log('抽出された概念:', semanticResults.conceptsUsed);
 }
 
-// ブラウザコンソールで実行してみよう
+/*** 入力トピックで生成 ***/
+async function generateQuizFromInput(){
+    const topic = document.getElementById("quiz-topic-input").value.trim();
+    const level = document.getElementById("quiz-level-select").value;
 
-// ページロード時に初期化
+    if(!topic){ alert("クイズのトピックを入力してください"); return; }
+
+    const quiz = await generateQuiz(topic, level);
+    if(quiz) showQuiz(quiz);
+}
+
+/*** クイズ表示 ***/
+function showQuiz(quiz){
+    const area = document.getElementById("quiz-area");
+    const content = document.getElementById("quiz-content");
+
+    content.innerHTML = `
+        <p><strong>問題:</strong> ${quiz.question}</p>
+        <ol id="quiz-options">
+            ${quiz.options.map((o,i)=>`<li><button onclick="checkAnswer(${i},${quiz.correct})">${o}</button></li>`).join("")}
+        </ol>
+        <p id="quiz-answer" style="margin-top:10px; font-weight:bold;"></p>
+    `;
+    area.style.display = "block";
+}
+
+/*** 回答チェック ***/
+function checkAnswer(selected, correct){
+    const answerArea = document.getElementById("quiz-answer");
+    if(selected===correct){
+        answerArea.textContent = `✅ 正解です！`;
+        answerArea.style.color = "green";
+    } else {
+        answerArea.textContent = `❌ 不正解です。正解は ${correct+1} 番です。`;
+        answerArea.style.color = "red";
+    }
+}
+
 window.onload = initialize;
 </script>
 </body>
